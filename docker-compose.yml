@@ -1,0 +1,60 @@
+version: '3.8'
+
+networks:
+  default:
+    name: aflt-net
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_DB: inventory
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5555:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+
+  zookeeper:
+    image: docker.io/wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: docker.io/wurstmeister/kafka
+    container_name: kafka
+    environment:
+      - KAFKA_ADVERTISED_HOST_NAME=kafka
+      - KAFKA_ADVERTISED_PORT=9092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+
+  listener:
+    build:
+      context: ./consumer/
+    depends_on:
+      - postgres
+      - kafka
+
+  api:
+    build:
+      context: .
+    ports:
+      - "8765:8000"
+    depends_on:
+      - postgres
+
