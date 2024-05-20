@@ -19,7 +19,7 @@ class InventoryORM(Base):
     flight_number: Mapped[str]
     booking_class: Mapped[str]
     available_seats: Mapped[int]
-    departure_time: Mapped[datetime.date]
+    departure_date: Mapped[datetime.date]
     time: Mapped[datetime.time]
 
     __table_args__ = (
@@ -28,7 +28,7 @@ class InventoryORM(Base):
     )
 
 async_engine = create_async_engine(
-    url='postgresql+asyncpg://user:password@postgres:5555/inventory'
+    url='postgresql+asyncpg://user:password@postgres:5432/inventory'
 )
 async_session = async_sessionmaker(
     bind=async_engine
@@ -67,7 +67,7 @@ async def updater():
                                 data['time'],
                             ),
                             flight_number=data['flight_number'],
-                            departure_time=datetime.datetime.fromisoformat(
+                            departure_date=datetime.datetime.fromisoformat(
                                 data['departure_date'],
                             ),
                             booking_class=data['booking_class'],
@@ -79,7 +79,7 @@ async def updater():
                                     data['time'],
                                 ),
                                 available_seats=data['available_seats'],
-                                departure_time=datetime.datetime.fromisoformat(
+                                departure_date=datetime.datetime.fromisoformat(
                                     data['departure_date'],
                                 )
                             )
@@ -89,6 +89,7 @@ async def updater():
                 except Exception as e:
                     print('Database error!!')
                     print(type(e))
+                    print(e)
 
             except json.JSONDecodeError as e:
                 print(
